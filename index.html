@@ -3,168 +3,219 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Memory Game – Couple Edition</title>
+<title>Memory Game – Couple Edition (Cute + 2P + Sound)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#fff9fb;
-    --card:#ffffff;
-    --primary:#ff6fa9;
-    --secondary:#ffd166;
-    --accent:#62d2a2;
-    --text:#333;
-    --muted:#777;
-    --shadow: 0 8px 24px rgba(255,111,169,0.25);
-    --radius:18px;
+    /* Base (overridden by themes) */
+    --bg-1:#fff0f6; --bg-2:#ffe6ef; --line:#ffc3d9;
+    --pink:#ff6aa7; --pink-2:#ff88bd; --pink-3:#ffb6d6;
+    --accent-1:#ffd166; --accent-2:#86f2c0; --accent-3:#caa8ff;
+    --text:#3a2a2f; --muted:#8a6b76;
+    --shadow-soft: 0 10px 30px rgba(255,106,167,.25);
+    --shadow-card: 0 12px 28px rgba(255,118,173,.22);
+    --radius:20px;
   }
+  /* THEME: Pink (default) */
+  body[data-theme="pink"]{
+    --bg-1:#fff0f6; --bg-2:#ffe6ef; --line:#ffc3d9;
+    --pink:#ff6aa7; --pink-2:#ff88bd; --pink-3:#ffb6d6;
+    --accent-1:#ffd166; --accent-2:#86f2c0; --accent-3:#caa8ff;
+    --shadow-soft: 0 10px 30px rgba(255,106,167,.25);
+    --shadow-card: 0 12px 28px rgba(255,118,173,.22);
+  }
+  /* THEME: Mint */
+  body[data-theme="mint"]{
+    --bg-1:#eafff6; --bg-2:#d9fff0; --line:#b8f5de;
+    --pink:#31c69e; --pink-2:#44d9b2; --pink-3:#a8f0df;
+    --accent-1:#ffd166; --accent-2:#86f2c0; --accent-3:#7dd3fc;
+    --shadow-soft: 0 10px 30px rgba(49,198,158,.25);
+    --shadow-card: 0 12px 28px rgba(49,198,158,.22);
+  }
+  /* THEME: Lilac */
+  body[data-theme="lilac"]{
+    --bg-1:#f6f1ff; --bg-2:#eee7ff; --line:#dbc9ff;
+    --pink:#8b6cff; --pink-2:#aa92ff; --pink-3:#d1c6ff;
+    --accent-1:#ffd166; --accent-2:#a3f0d5; --accent-3:#ff88bd;
+    --shadow-soft: 0 10px 30px rgba(139,108,255,.25);
+    --shadow-card: 0 12px 28px rgba(139,108,255,.22);
+  }
+
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
-    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-    background: radial-gradient(1200px 800px at 85% -10%, #ffe7f1 0%, #fff 50%), var(--bg);
+    margin:0;
+    font-family: "Quicksand", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
     color:var(--text);
+    background:
+      radial-gradient(1200px 700px at 15% -10%, #ffffff66 0%, transparent 55%),
+      radial-gradient(900px 600px at 85% 0%, #ffffff66 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg-1), var(--bg-2));
+    overflow-x:hidden;
   }
+
+  /* Floating hearts */
+  .float-hearts{ position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+  .heart{ position:absolute; font-size:18px; opacity:.18; animation: rise linear infinite; }
+  @keyframes rise{
+    from{ transform: translateY(110vh) rotate(0deg) scale(.8); }
+    to{ transform: translateY(-10vh) rotate(360deg) scale(1.1); }
+  }
+
   header{
-    padding:16px 14px 8px; position:sticky; top:0; z-index:5;
-    background:linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.6) 60%, transparent);
+    position:sticky; top:0; z-index:5;
+    background: linear-gradient(to bottom, rgba(255,255,255,.85), rgba(255,255,255,.6) 60%, transparent);
     backdrop-filter: blur(6px);
+    padding:14px 14px 6px;
   }
-  .title{
-    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  .title{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .title h1{
+    margin:0; font-family:"Nunito", Quicksand, system-ui; letter-spacing:.3px; font-weight:900; font-size:24px;
+    background: linear-gradient(135deg, var(--pink), var(--pink-2));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  .badge{
-    background: linear-gradient(135deg, var(--primary), #ff9fc6);
-    color:white; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; letter-spacing:.4px;
-    box-shadow: var(--shadow);
+  .ribbon{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 12px; border-radius:999px; font-weight:800; font-size:12px; color:#fff;
+    background: linear-gradient(135deg, var(--pink), var(--accent-3));
+    box-shadow: var(--shadow-soft);
   }
-  .controls{
-    display:grid; grid-template-columns: 1fr; gap:10px; margin-top:10px;
-  }
-  @media (min-width:720px){
-    .controls{grid-template-columns: auto auto auto 1fr auto}
-  }
+  .ribbon:before{ content:"🎀"; filter: drop-shadow(0 2px 0 rgba(0,0,0,.05)); }
+
   .card-panel{
-    margin: 12px auto 20px; max-width: 1100px; background: #ffffffaa; border-radius: var(--radius);
-    padding: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    margin: 12px auto 20px; max-width: 1100px; background: #ffffffaa;
+    border:2px solid var(--line); border-radius: var(--radius);
+    padding: 10px; box-shadow: var(--shadow-card);
+  }
+
+  .controls{ display:grid; grid-template-columns: 1fr; gap:10px; }
+  @media (min-width:960px){
+    .controls{ grid-template-columns: repeat(6, minmax(0, auto)); align-items:stretch }
+    .controls > *:nth-child(4){ justify-self:start }
+    .controls > *:last-child{ justify-self:end }
   }
   .group{
     display:flex; gap:8px; align-items:center; flex-wrap:wrap;
-    background:#fff; padding:8px 10px; border-radius:12px; border:1px solid #f3e4ea;
+    background:#fff; border:2px dashed var(--line);
+    padding:10px 12px; border-radius:14px;
   }
   label{font-size:12px; color:var(--muted)}
   select, button, input[type="file"]{
-    appearance:none; border:1px solid #ffd6e6; border-radius:10px; padding:10px 12px; background:#fff;
+    appearance:none; border:2px solid var(--pink-3); border-radius:12px; padding:10px 12px; background:#fff;
     font-size:14px; color:var(--text);
   }
   button{
-    background: linear-gradient(135deg, var(--primary), #ff9fc6); color:#fff; border:none; cursor:pointer;
-    font-weight:700; box-shadow: var(--shadow);
-    transition: transform .06s ease;
+    background: linear-gradient(135deg, var(--pink), var(--pink-2));
+    color:#fff; border:none; cursor:pointer; font-weight:900;
+    box-shadow: var(--shadow-soft); transform: translateY(0); transition: transform .08s ease, filter .2s ease;
   }
-  button:active{ transform: translateY(1px) scale(.99); }
-  .stat{
-    display:flex; gap:14px; align-items:center; font-size:14px; flex-wrap:wrap;
-  }
+  button:hover{ filter: brightness(1.05) }
+  button:active{ transform: translateY(1px) scale(.99) }
   .chip{
-    background:#fff; border:1px dashed #ffd6e6; padding:6px 10px; border-radius:999px; font-weight:600;
+    background:#fff; border:2px solid var(--pink-3); padding:6px 10px; border-radius:999px;
+    font-weight:800; color:#5a2a6f;
   }
+  .chip.active{ background:linear-gradient(135deg, var(--pink-3), #fff); border-color:var(--pink-2); }
 
   /* Board */
-  .board-wrap{max-width:1100px; margin:0 auto 60px; padding:0 14px;}
-  .board{
-    display:grid; gap:10px; justify-content:center;
-  }
-  /* grid responsive by data-cols */
-  .board[data-cols="4"]{ grid-template-columns: repeat(4, minmax(72px, 1fr));}
+  .board-wrap{max-width:1100px; margin:0 auto 60px; padding:0 14px; position:relative; z-index:1;}
+  .board{ display:grid; gap:12px; justify-content:center; }
+  .board[data-cols="4"]{ grid-template-columns: repeat(4, minmax(74px, 1fr));}
   .board[data-cols="5"]{ grid-template-columns: repeat(5, minmax(64px, 1fr));}
   .board[data-cols="6"]{ grid-template-columns: repeat(6, minmax(56px, 1fr));}
   @media (min-width:520px){
-    .board[data-cols="4"]{ grid-template-columns: repeat(4, 140px);}
-    .board[data-cols="5"]{ grid-template-columns: repeat(5, 120px);}
-    .board[data-cols="6"]{ grid-template-columns: repeat(6, 108px);}
+    .board[data-cols="4"]{ grid-template-columns: repeat(4, 142px);}
+    .board[data-cols="5"]{ grid-template-columns: repeat(5, 122px);}
+    .board[data-cols="6"]{ grid-template-columns: repeat(6, 110px);}
   }
 
-  .tile{
-    perspective: 900px; position:relative; aspect-ratio: 3/4;
-  }
+  .tile{ perspective: 1000px; position:relative; aspect-ratio: 3/4; }
   .card{
-    width:100%; height:100%; border-radius:16px; position:absolute; inset:0;
-    transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2,.7,.2,1);
+    width:100%; height:100%; border-radius:18px; position:absolute; inset:0;
+    transform-style: preserve-3d; transition: transform .6s cubic-bezier(.2,.8,.2,1);
     cursor:pointer;
   }
   .card.flip{ transform: rotateY(180deg) }
   .face{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center; backface-visibility:hidden;
-    border-radius:16px; user-select:none;
+    border-radius:18px; user-select:none;
   }
   .front{
-    background:#fff; border:2px solid #ffd6e6;
-    background-image: radial-gradient(12px 12px at 20% 20%, rgba(255,245,248,.9), transparent 60%),
-                      radial-gradient(18px 18px at 80% 60%, #fff1f7, transparent 60%);
+    background:
+      radial-gradient(18px 18px at 20% 25%, #fff2f7 0%, transparent 70%),
+      radial-gradient(24px 24px at 80% 65%, #ffe9f3 0%, transparent 70%),
+      linear-gradient(145deg, #ffffff, #fff7fb);
+    border:2.5px solid var(--pink-3);
+    position:relative;
   }
+  .front .qmark{
+    font-size: clamp(22px, 5.4vw, 34px);
+    background: linear-gradient(135deg, var(--pink-2), var(--accent-3));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.12));
+  }
+  .front .bow{ position:absolute; top:8px; right:10px; font-size:18px; opacity:.7; }
   .back{
     transform: rotateY(180deg);
-    background:linear-gradient(145deg, #fff, #ffeaf2);
-    border:2px solid #ffc0da;
+    background:
+      radial-gradient(10px 10px at 16% 24%, #ffddec 0%, transparent 60%),
+      radial-gradient(12px 12px at 80% 70%, #ffe9f4 0%, transparent 60%),
+      repeating-linear-gradient(135deg, #fff, #fff 10px, #fff7fb 10px, #fff7fb 20px);
+    border:2.5px solid var(--pink-2);
+    box-shadow: 0 10px 18px rgba(0,0,0,.08) inset;
   }
-  .emoji{
-    font-size: clamp(28px, 5.6vw, 42px);
-  }
-  .word{
-    font-size: clamp(16px, 3.8vw, 20px); font-weight:800; color:#ff3d8a; letter-spacing:.4px; text-align:center; padding:8px;
-  }
-  .thumb{
-    width:100%; height:100%; object-fit:cover; border-radius:14px;
-  }
+  .emoji{ font-size: clamp(30px, 6vw, 44px) }
+  .word{ font-size: clamp(16px, 4vw, 20px); font-weight:900; color:var(--pink); letter-spacing:.4px; text-align:center; padding:8px 10px; text-shadow: 0 2px 0 var(--pink-3); }
+  .thumb{ width:100%; height:100%; object-fit:cover; border-radius:16px; }
   .matched .card{ animation: pop .6s ease }
-  @keyframes pop{ 50%{ transform: rotateY(180deg) scale(1.04) } }
+  @keyframes pop{ 40%{ transform: rotateY(180deg) scale(1.05) } }
 
   /* Modal */
   .modal{
     position: fixed; inset:0; display:none; place-items:center; padding:16px; z-index:50;
-    background: rgba(0,0,0,.25);
+    background: rgba(0,0,0,.18);
   }
   .modal.show{ display:grid; }
   .modal-card{
-    width:min(560px, 94vw); background:#fff; border-radius:20px; padding:18px 16px 14px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.15); border:2px solid #ffd6e6;
+    width:min(560px, 94vw); background:#fff; border-radius:24px; padding:18px 16px 14px;
+    box-shadow: 0 26px 80px rgba(0,0,0,.2); border:3px solid var(--pink-3);
+    position:relative;
   }
-  .modal-head{
-    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;
-  }
-  .modal-head h3{ margin:0; font-size:18px }
+  .modal-card:before{ content:"💞"; position:absolute; font-size:28px; left:10px; top:-16px; transform: rotate(-12deg); }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  .modal-head h3{ margin:0; font-size:20px; font-family:"Nunito", Quicksand; letter-spacing:.2px }
   .tag{
-    padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800; color:#fff;
-    background: linear-gradient(135deg, var(--accent), #7be3be);
+    padding:8px 12px; border-radius:999px; font-size:12px; font-weight:900; color:#fff;
+    background: linear-gradient(135deg, var(--accent-2), #9df2d0);
+    box-shadow: var(--shadow-soft);
   }
-  .modal-body{ font-size:16px; line-height:1.5; padding:8px 2px 2px; }
+  .modal-body{ font-size:16px; line-height:1.55; padding:8px 2px 2px; }
   .modal-actions{ margin-top:14px; display:flex; gap:8px; justify-content:flex-end }
-  .btn-secondary{
-    background:linear-gradient(135deg, #ffd166, #ffe08a); color:#8a5a00;
-  }
+  .btn-secondary{ background:linear-gradient(135deg, #ffe089, var(--accent-1)); color:#7a5a00; font-weight:900; }
 
-  /* Footer tip */
-  .tips{
-    max-width:1100px; margin:0 auto 40px; padding:0 14px; color:#7a5b68; font-size:13px;
-  }
-
-  /* focus */
-  .card:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible{
-    outline:3px solid #ffb3d1; outline-offset:2px; border-radius:12px;
-  }
+  /* Confetti */
+  .confetti{ position:fixed; inset:0; pointer-events:none; z-index:60; }
+  .piece{ position:absolute; width:10px; height:14px; opacity:.95; animation: fall linear forwards; }
+  @keyframes fall{ to{ transform: translateY(110vh) rotate(720deg); opacity:1 } }
 </style>
 </head>
-<body>
+<body data-theme="pink">
+  <!-- floating hearts background -->
+  <div class="float-hearts" aria-hidden="true" id="floatHearts"></div>
+
   <header>
     <div class="title">
-      <h1 style="margin:0;font-size:22px">💖 Memory Game – Couple Edition</h1>
-      <span class="badge">Colorful • Mobile-Friendly</span>
-      <span class="badge" style="background:linear-gradient(135deg,#62d2a2,#7be3be)">Vibrate + Pop-ups</span>
+      <h1>Memory Game – Couple Edition</h1>
+      <span class="ribbon">Cute • Mobile • Colorful</span>
+      <span class="ribbon" style="background:linear-gradient(135deg,var(--pink),var(--pink-2))">🎉 Vibrate + Pop-ups</span>
     </div>
 
     <div class="card-panel">
       <div class="controls">
         <div class="group">
           <label for="level">Level</label>
-          <select id="level" aria-label="Pilih level">
+          <select id="level">
             <option value="4x3">Mudah 4×3 (6 pasang)</option>
             <option value="4x4" selected>Standard 4×4 (8 pasang)</option>
             <option value="5x4">Menengah 5×4 (10 pasang)</option>
@@ -173,13 +224,13 @@
         </div>
 
         <div class="group" style="min-width:220px">
-          <label for="uploads">Upload Foto (otomatis jadi pasangan)</label>
+          <label for="uploads">Upload Foto</label>
           <input id="uploads" type="file" accept="image/*" multiple />
         </div>
 
         <div class="group">
           <label for="set">Isi Default</label>
-          <select id="set" aria-label="Pilih set">
+          <select id="set">
             <option value="mix" selected>Campur Ikon + Kata</option>
             <option value="icons">Ikon Romantis</option>
             <option value="words">Kata Romantis</option>
@@ -187,14 +238,40 @@
           </select>
         </div>
 
-        <div class="group stat" id="stats">
+        <div class="group">
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="1p" selected>1 Pemain</option>
+            <option value="2p">2 Pemain (Bergantian)</option>
+          </select>
+        </div>
+
+        <div class="group">
+          <label for="theme">Tema</label>
+          <select id="theme">
+            <option value="pink" selected>Pink</option>
+            <option value="mint">Mint</option>
+            <option value="lilac">Lilac</option>
+          </select>
+        </div>
+
+        <div class="group" style="justify-content:flex-end;gap:8px">
+          <button id="soundBtn" title="Suara">🔊</button>
+          <button id="start">Mulai / Reset</button>
+        </div>
+      </div>
+
+      <!-- stats row -->
+      <div class="controls" style="margin-top:10px; grid-template-columns: repeat(5,minmax(0,auto));">
+        <div class="group" style="gap:10px">
           <span class="chip" id="timer">⏱ 00:00</span>
           <span class="chip" id="moves">👣 0</span>
           <span class="chip" id="best">🏆 Best: —</span>
         </div>
-
-        <div class="group" style="justify-content:flex-end">
-          <button id="start">Mulai / Reset</button>
+        <div class="group" style="gap:10px">
+          <span class="chip active" id="p1">🧑 P1: <b id="p1score">0</b></span>
+          <span class="chip" id="p2">🧑‍🤝‍🧑 P2: <b id="p2score">0</b></span>
+          <span class="chip" id="turn">🔄 Giliran: <b>P1</b></span>
         </div>
       </div>
     </div>
@@ -204,10 +281,8 @@
     <div id="board" class="board" data-cols="4" aria-live="polite"></div>
   </main>
 
-  <section class="tips">
-    Tip: Klik/ketuk kartu untuk membalik. Setiap kamu berhasil menemukan pasangan, akan muncul pop-up berisi
-    pertanyaan <b>Deep Talk</b> atau <b>Challenge</b> lucu buat pasangan. Kamu bisa unggah foto pribadi agar
-    makin personal. Semua berjalan baik di HP 🤳.
+  <section class="tips" style="text-align:center; color:var(--muted);">
+    Tip: Di mode 2 pemain, yang berhasil match boleh lanjut giliran! 🎯
   </section>
 
   <!-- Modal -->
@@ -225,38 +300,59 @@
     </div>
   </div>
 
+  <!-- Confetti -->
+  <div id="confetti" class="confetti" aria-hidden="true"></div>
+
 <script>
 (() => {
-  // ====== Data ======
-  const ICONS = ['💘','💝','💞','💕','💓','💗','💖','❤️','🫶','😘','😍','😚','👩‍❤️‍👨','💍','🌹','🌸','🍫','☕️','🍓','🎵','📸','✈️','🏝️','🌙','⭐️','🎁','🍰','🍦','🥰','🤍','💌','🎧','🎬','🍿','💃','🕺'];
-  const WORDS = ['Cintaku','Sayang','Peluk','Rindu','My Person','Soulmate','Kamu&Aku','Forever','IniTakdir?','PegangTangan','DateNight','PelipurLara','Let’sTalk','Honesty','Trust','Grateful','Support','QualityTime','Respect','WeTime','Komitmen','Impian','Rumah','Humor','Sabar','Maaf','PelukDulu','CupOfTea'];
+  // ===== Background floating hearts =====
+  const HEARTS = ['💗','💖','💞','💘','💕','💝','🩷'];
+  const floatWrap = document.getElementById('floatHearts');
+  function spawnHearts(){
+    for(let i=0;i<18;i++){
+      const h=document.createElement('div');
+      h.className='heart';
+      h.textContent = HEARTS[i%HEARTS.length];
+      h.style.left = (Math.random()*100)+'vw';
+      const dur = 18 + Math.random()*12;
+      h.style.animationDuration = dur+'s';
+      h.style.animationDelay = (-Math.random()*dur)+'s';
+      h.style.fontSize = (14+Math.random()*24)+'px';
+      floatWrap.appendChild(h);
+    }
+  }
+  spawnHearts();
+
+  // ===== Data =====
+  const ICONS = ['💘','💝','💞','💕','💓','💗','💖','🩷','🫶','😘','😍','😚','👩‍❤️‍👨','💍','🌹','🌸','🍓','🍰','🍦','🎀','🎵','📸','✈️','🏝️','🌙','⭐️','🎁','🍫','☕️','🥰','🤍','💌','🎧','🎬','🍿','💃','🕺'];
+  const WORDS = ['Cintaku','Sayang','Peluk','Rindu','My Person','Soulmate','Kamu&Aku','Forever','Takdir','Gandengan','DateNight','PelipurLara','Let’sTalk','Honesty','Trust','Syukur','Support','WeTime','Komitmen','Impian','Rumah','Humor','Sabar','Maaf','PelukDulu','Sweet','BucinGemoy','Cuddle'];
 
   const DEEP_TALK = [
-    "Hal kecil apa dari aku yang paling kamu syukuri akhir-akhir ini?",
+    "Hal kecil apa dariku yang paling kamu syukuri minggu ini?",
     "Kapan kamu merasa paling didengar olehku?",
     "Satu kebiasaan pasangan ideal yang ingin kita bangun bareng?",
-    "Hal yang dulu kamu takutkan tentang hubungan, dan bagaimana sekarang?",
+    "Hal yang dulu kamu takuti soal hubungan, gimana sekarang?",
     "Apa arti ‘rumah’ buat kamu?",
-    "Jika 5 tahun lagi, kita ingin dikenal sebagai pasangan yang seperti apa?",
-    "Bagian mana dari dirimu yang ingin lebih kupahami?",
-    "Kapan terakhir kali kamu merasa benar-benar didukung?",
-    "Batasan (boundary) apa yang penting untuk kita jaga?",
-    "Momen paling sederhana tapi bermakna yang ingin kamu ulang?"
+    "5 tahun lagi, kita ingin dikenal sebagai pasangan seperti apa?",
+    "Bagian dirimu apa yang ingin lebih kupahami?",
+    "Kapan terakhir kali kamu benar-benar merasa didukung?",
+    "Boundary apa yang penting untuk kita jaga?",
+    "Momen sederhana namun bermakna apa yang ingin diulang?"
   ];
   const CHALLENGES = [
     "Peluk pasanganmu 10 detik penuh. 🤗",
-    "Katakan 3 hal yang kamu sukai dari pasangan. 💬",
-    "Tukar kontak wallpaper HP selama 1 hari. 📱",
-    "Rekam voice note 10 detik berisi apresiasi. 🎙️",
-    "Selfie bareng sekarang juga! 📸",
-    "Pegang tangan pasangan sampai 1 ronde selesai. 🤝",
-    "Pilih lagu romantis dan putar pelan-pelan. 🎵",
-    "Kirim DM/WA satu kalimat manis barusan. 💌",
-    "Buat janji kencan sederhana minggu ini. 📅",
-    "Tertawa bareng 30 detik walau garing. 😂"
+    "Sebut 3 hal yang kamu sukai darinya. 💬",
+    "Tukar wallpaper HP 1 hari. 📱",
+    "Rekam voice note apresiasi 10 detik. 🎙️",
+    "Selfie berdua sekarang juga! 📸",
+    "Pegang tangan sampai 1 ronde selesai. 🤝",
+    "Putar satu lagu romantis. 🎵",
+    "Kirim satu kalimat manis via chat. 💌",
+    "Janji kencan sederhana minggu ini. 📅",
+    "Tertawa bareng 30 detik. 😂"
   ];
 
-  // ====== State ======
+  // ===== Refs =====
   const boardEl = document.getElementById('board');
   const timerEl = document.getElementById('timer');
   const movesEl = document.getElementById('moves');
@@ -265,6 +361,15 @@
   const setEl   = document.getElementById('set');
   const uploadsEl = document.getElementById('uploads');
   const startBtn = document.getElementById('start');
+  const modeEl = document.getElementById('mode');
+  const themeEl = document.getElementById('theme');
+  const soundBtn = document.getElementById('soundBtn');
+
+  const p1Chip = document.getElementById('p1');
+  const p2Chip = document.getElementById('p2');
+  const p1ScoreEl = document.getElementById('p1score');
+  const p2ScoreEl = document.getElementById('p2score');
+  const turnEl = document.getElementById('turn');
 
   const modal = document.getElementById('modal');
   const modalTitle = document.getElementById('modalTitle');
@@ -273,55 +378,93 @@
   const closeModalBtn = document.getElementById('closeModal');
   const skipPromptBtn = document.getElementById('skipPrompt');
 
+  const confettiWrap = document.getElementById('confetti');
+
+  // ===== State =====
   let firstCard = null, secondCard = null, lockBoard = false;
   let moves = 0, matches = 0, totalPairs = 8, timer = 0, tick = null, started = false;
   let deck = []; // {id, type:'emoji'|'word'|'img', value, matchId}
+  let soundOn = true;
 
-  // ====== Utils ======
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  // 2P state
+  let twoPlayers = false;
+  let turn = 1; // 1 or 2
+  let p1Score = 0, p2Score = 0;
+
+  // ===== Utils =====
   const pad = n => String(n).padStart(2, '0');
   const vibrate = (p) => { if (navigator.vibrate) navigator.vibrate(p); };
-
-  function saveBest(levelKey, val){
-    localStorage.setItem('coupleMemory.best.'+levelKey, JSON.stringify(val));
-  }
-  function getBest(levelKey){
-    try{
-      const v = JSON.parse(localStorage.getItem('coupleMemory.best.'+levelKey));
-      return v||null;
-    }catch{ return null }
-  }
-  function showBest(){
-    const key = levelEl.value + '|' + setEl.value;
+  const saveBest = (k,v)=> localStorage.setItem('coupleMemory.best.'+k, JSON.stringify(v));
+  const getBest = (k)=> { try{ return JSON.parse(localStorage.getItem('coupleMemory.best.'+k))||null }catch{ return null } };
+  const showBest = ()=>{
+    const key = levelEl.value + '|' + setEl.value + '|' + (twoPlayers?'2p':'1p');
     const b = getBest(key);
-    if(!b){ bestEl.textContent = '🏆 Best: —'; return; }
-    bestEl.textContent = `🏆 Best: ${b.time}s • ${b.moves} moves`;
-  }
+    bestEl.textContent = b ? `🏆 Best: ${b.time}s • ${b.moves} moves` : '🏆 Best: —';
+  };
+  function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+  function updateTimer(){ timer++; const m=Math.floor(timer/60), s=timer%60; timerEl.textContent=`⏱ ${pad(m)}:${pad(s)}`; }
+  function setTheme(name){ document.body.setAttribute('data-theme', name); }
 
-  function updateTimer(){
-    timer++;
-    const m = Math.floor(timer/60), s = timer%60;
-    timerEl.textContent = `⏱ ${pad(m)}:${pad(s)}`;
-  }
-
-  function shuffle(arr){
-    for(let i=arr.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [arr[i],arr[j]]=[arr[j],arr[i]];
+  // Simple confetti for win
+  function burstConfetti(){
+    confettiWrap.innerHTML='';
+    const colors=['var(--pink)','var(--pink-2)','var(--accent-1)','var(--accent-2)','var(--accent-3)','white'];
+    for(let i=0;i<80;i++){
+      const p=document.createElement('div');
+      p.className='piece';
+      p.style.left=(Math.random()*100)+'vw';
+      p.style.top='-10vh';
+      p.style.background = colors[i%colors.length];
+      p.style.transform=`translateY(0) rotate(${Math.random()*360}deg)`;
+      p.style.animationDuration = (2.8+Math.random()*1.2)+'s';
+      confettiWrap.appendChild(p);
     }
-    return arr;
+    setTimeout(()=>{ confettiWrap.innerHTML=''; }, 4500);
   }
 
-  // Builds deck based on uploads + set + level
+  // ===== WebAudio (no external files) =====
+  let audioCtx = null;
+  function ensureAudio(){ if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } }
+  function beep(freq=600, dur=0.07, type='sine', gain=0.06){
+    if(!soundOn) return;
+    ensureAudio();
+    const t = audioCtx.currentTime;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(gain, t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  function chord(freqs=[523,659,784], dur=0.18){
+    if(!soundOn) return;
+    ensureAudio();
+    const t = audioCtx.currentTime;
+    const master = audioCtx.createGain();
+    master.gain.value = 0.05;
+    master.connect(audioCtx.destination);
+    freqs.forEach((f,i)=>{
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.06/(i+1), t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+      o.connect(g).connect(master); o.start(t); o.stop(t+dur+0.05);
+    });
+  }
+
+  // ===== Build Deck =====
   async function buildDeck(){
     const [cols, rows] = levelEl.value.split('x').map(Number);
     totalPairs = (cols*rows)/2;
     boardEl.dataset.cols = String(cols);
 
-    // Read uploads into DataURL
     let uploadPairs = [];
     if(uploadsEl.files && uploadsEl.files.length){
-      const files = Array.from(uploadsEl.files).slice(0, totalPairs); // limit pairs
+      const files = Array.from(uploadsEl.files).slice(0, totalPairs);
       uploadPairs = await Promise.all(files.map(file => new Promise((res)=>{
         const fr = new FileReader();
         fr.onload = () => res({ type:'img', value: fr.result });
@@ -329,95 +472,78 @@
       })));
     }
 
-    // Build default pool
-    let pool = [];
-    if(setEl.value !== 'none'){
-      if(setEl.value === 'icons' || setEl.value === 'mix'){
-        pool.push(...shuffle([...ICONS]).slice(0, totalPairs));
-      }
-      if(setEl.value === 'words' || setEl.value === 'mix'){
-        const needed = totalPairs - (pool.length ? Math.floor(pool.length/2) : 0);
-        // mix ensures both types; adjust selection
-        pool.push(...shuffle([...WORDS]).slice(0, Math.max(0, needed)));
-      }
-    }
+    let pairs=[];
+    uploadPairs.forEach(p=>pairs.push(p));
 
-    // Construct pairs priority: uploads first, then defaults
-    const pairs = [];
-    // add uploads
-    uploadPairs.forEach(p => pairs.push(p));
-    // fill remaining
-    let i=0, j=0;
-    while(pairs.length < totalPairs){
+    const need = totalPairs - pairs.length;
+    if(need>0){
       if(setEl.value==='icons'){
-        pairs.push({type:'emoji', value: ICONS[i % ICONS.length]}); i++;
+        const take = shuffle([...ICONS]).slice(0, need);
+        pairs.push(...take.map(v=>({type:'emoji', value:v})));
       }else if(setEl.value==='words'){
-        pairs.push({type:'word', value: WORDS[j % WORDS.length]}); j++;
-      }else{ // mix
-        if(pairs.length % 2 === 0){
-          pairs.push({type:'emoji', value: ICONS[i % ICONS.length]}); i++;
-        }else{
-          pairs.push({type:'word', value: WORDS[j % WORDS.length]}); j++;
-        }
-      }
-      // if 'none' and no uploads, fallback to icons
-      if(setEl.value==='none' && uploadPairs.length===0){
-        pairs[pairs.length-1] = {type:'emoji', value: ICONS[i++ % ICONS.length]};
+        const take = shuffle([...WORDS]).slice(0, need);
+        pairs.push(...take.map(v=>({type:'word', value:v})));
+      }else if(setEl.value==='mix'){
+        const half = Math.floor(need/2);
+        const takeI = shuffle([...ICONS]).slice(0, half);
+        const takeW = shuffle([...WORDS]).slice(0, need-half);
+        pairs.push(...takeI.map(v=>({type:'emoji', value:v})));
+        pairs.push(...takeW.map(v=>({type:'word', value:v})));
+      }else if(setEl.value==='none' && uploadPairs.length===0){
+        const take = shuffle([...ICONS]).slice(0, need);
+        pairs.push(...take.map(v=>({type:'emoji', value:v})));
       }
     }
 
-    // Expand pairs to two cards each
-    let idCounter = 0;
-    deck = shuffle(pairs.flatMap((p, idx) => {
-      const matchId = 'm'+idx;
-      const a = { id: 'c'+(idCounter++), matchId, ...p };
-      const b = { id: 'c'+(idCounter++), matchId, ...p };
+    let id=0;
+    deck = shuffle(pairs.flatMap((p,idx)=>{
+      const matchId='m'+idx;
+      const a={id:'c'+(id++), matchId, ...p};
+      const b={id:'c'+(id++), matchId, ...p};
       return [a,b];
     }));
   }
 
   function renderBoard(){
-    boardEl.innerHTML = '';
-    deck.forEach(cardData => {
-      const tile = document.createElement('div');
-      tile.className = 'tile';
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'card';
-      card.setAttribute('data-id', cardData.id);
-      card.setAttribute('data-match', cardData.matchId);
-      card.setAttribute('aria-label', 'Kartu belum terbuka');
+    boardEl.innerHTML='';
+    deck.forEach(cd=>{
+      const tile=document.createElement('div'); tile.className='tile';
+      const card=document.createElement('button'); card.type='button'; card.className='card';
+      card.dataset.id=cd.id; card.dataset.match=cd.matchId; card.setAttribute('aria-label','Kartu');
       card.addEventListener('click', onFlip);
 
-      const front = document.createElement('div');
-      front.className = 'face front';
-      front.innerHTML = `<span class="emoji">❓</span>`;
+      const front=document.createElement('div'); front.className='face front';
+      front.innerHTML = `<span class="qmark">?</span><span class="bow">🎀</span>`;
 
-      const back = document.createElement('div');
-      back.className = 'face back';
-      if(cardData.type==='emoji'){
-        back.innerHTML = `<span class="emoji">${cardData.value}</span>`;
-      }else if(cardData.type==='word'){
-        back.innerHTML = `<div class="word">${cardData.value}</div>`;
-      }else{ // img
-        const img = document.createElement('img');
-        img.src = cardData.value;
-        img.alt = "Foto pasangan";
-        img.className = 'thumb';
-        back.appendChild(img);
+      const back=document.createElement('div'); back.className='face back';
+      if(cd.type==='emoji'){
+        back.innerHTML = `<span class="emoji">${cd.value}</span>`;
+      }else if(cd.type==='word'){
+        back.innerHTML = `<div class="word">${cd.value}</div>`;
+      }else{
+        const img=document.createElement('img'); img.src=cd.value; img.alt="Foto"; img.className='thumb'; back.appendChild(img);
       }
-
-      card.appendChild(front); card.appendChild(back);
-      tile.appendChild(card);
-      boardEl.appendChild(tile);
+      card.appendChild(front); card.appendChild(back); tile.appendChild(card); boardEl.appendChild(tile);
     });
   }
 
+  function reset2P(){
+    twoPlayers = (modeEl.value==='2p');
+    turn = 1; p1Score = 0; p2Score = 0;
+    p1ScoreEl.textContent = '0';
+    p2ScoreEl.textContent = '0';
+    p1Chip.classList.add('active');
+    p2Chip.classList.remove('active');
+    turnEl.querySelector('b').textContent = 'P1';
+    document.querySelectorAll('#p1 b, #p2 b').forEach(b=>b.style.fontWeight='800');
+  }
+
   function resetStateUI(){
-    firstCard = null; secondCard = null; lockBoard = false;
-    moves = 0; matches = 0; timer = 0; started = false;
-    timerEl.textContent = `⏱ 00:00`; movesEl.textContent = `👣 0`;
-    if(tick){ clearInterval(tick); tick = null; }
+    firstCard=null; secondCard=null; lockBoard=false;
+    moves=0; matches=0; timer=0; started=false;
+    timerEl.textContent=`⏱ 00:00`; movesEl.textContent=`👣 0`;
+    if(tick){ clearInterval(tick); tick=null; }
+    reset2P();
   }
 
   async function startGame(){
@@ -431,109 +557,127 @@
   function startTimerOnce(){
     if(started) return;
     started = true;
-    tick = setInterval(updateTimer, 1000);
+    tick=setInterval(updateTimer,1000);
+  }
+
+  function switchTurn(){
+    if(!twoPlayers) return;
+    turn = (turn===1)?2:1;
+    p1Chip.classList.toggle('active', turn===1);
+    p2Chip.classList.toggle('active', turn===2);
+    turnEl.querySelector('b').textContent = (turn===1)?'P1':'P2';
   }
 
   function onFlip(e){
-    const btn = e.currentTarget;
+    const btn=e.currentTarget;
     if(lockBoard) return;
     if(btn.classList.contains('flip')) return;
 
     startTimerOnce();
     btn.classList.add('flip');
-    vibrate(8);
+    vibrate(8); beep(420,0.05,'triangle',0.05); // flip sfx
 
-    if(!firstCard){
-      firstCard = btn; return;
-    }
-    secondCard = btn;
-    moves++; movesEl.textContent = `👣 ${moves}`;
+    if(!firstCard){ firstCard=btn; return; }
+    secondCard=btn; moves++; movesEl.textContent=`👣 ${moves}`;
+    const isMatch = firstCard.dataset.match===secondCard.dataset.match;
 
-    const isMatch = firstCard.dataset.match === secondCard.dataset.match;
-    if(isMatch){
-      handleMatch();
-    }else{
-      lockBoard = true;
-      setTimeout(() => {
+    if(isMatch){ handleMatch(); }
+    else{
+      lockBoard=true;
+      setTimeout(()=>{
         firstCard.classList.remove('flip');
         secondCard.classList.remove('flip');
-        firstCard = null; secondCard = null; lockBoard = false;
-      }, 700);
+        firstCard=null; secondCard=null; lockBoard=false;
+        switchTurn(); // gagal -> ganti giliran
+      }, 720);
     }
   }
 
-  async function handleMatch(){
-    matches++;
-    vibrate([0, 10, 20, 10]);
-    // freeze matched
-    firstCard.parentElement.classList.add('matched');
-    secondCard.parentElement.classList.add('matched');
-    firstCard.disabled = true; secondCard.disabled = true;
-    firstCard = null; secondCard = null;
-
-    // Pop prompt (70% deep talk, 30% challenge)
-    const isDeep = Math.random() < .7;
-    openPrompt(isDeep ? 'deep' : 'challenge');
-
-    // Win?
-    const needed = deck.length/2;
-    if(matches === needed){
-      setTimeout(() => {
-        if(tick){ clearInterval(tick); tick = null; }
-        const key = levelEl.value + '|' + setEl.value;
-        const best = getBest(key);
-        const score = { time: timer, moves };
-        if(!best || score.time < best.time || (score.time===best.time && score.moves<best.moves)){
-          saveBest(key, score);
-        }
-        showBest();
-        // final prompt
-        openPrompt('win', `Selesai! 🎉 Waktu: ${timer}s • Langkah: ${moves}. Mau rematch atau naik level?`);
-      }, 200);
-    }
+  function addPointCurrent(){
+    if(!twoPlayers) return;
+    if(turn===1){ p1Score++; p1ScoreEl.textContent = String(p1Score); }
+    else { p2Score++; p2ScoreEl.textContent = String(p2Score); }
   }
 
   function randomPrompt(kind){
-    if(kind==='deep'){
-      return DEEP_TALK[Math.floor(Math.random()*DEEP_TALK.length)];
-    }else if(kind==='challenge'){
-      return CHALLENGES[Math.floor(Math.random()*CHALLENGES.length)];
-    }
+    if(kind==='deep') return DEEP_TALK[Math.floor(Math.random()*DEEP_TALK.length)];
+    if(kind==='challenge') return CHALLENGES[Math.floor(Math.random()*CHALLENGES.length)];
     return '';
   }
 
   function openPrompt(kind='deep', customText=null){
-    modalTitle.textContent = kind==='win' ? '🏁 Game Selesai' : '♥️ Momen Match!';
+    modalTitle.textContent = kind==='win' ? '🏁 Yeay! Selesai' : '♥️ Momen Match!';
     if(kind==='deep'){
-      modalType.textContent = 'Deep Talk'; modalType.style.background = 'linear-gradient(135deg, var(--accent), #7be3be)';
+      modalType.textContent='Deep Talk';
+      modalType.style.background='linear-gradient(135deg, var(--accent-2), #9df2d0)';
       modalBody.textContent = customText || randomPrompt('deep');
     }else if(kind==='challenge'){
-      modalType.textContent = 'Challenge'; modalType.style.background = 'linear-gradient(135deg, var(--secondary), #ffe08a)';
+      modalType.textContent='Challenge';
+      modalType.style.background='linear-gradient(135deg, var(--accent-1), #ffe08a)';
       modalBody.textContent = customText || randomPrompt('challenge');
-    }else{ // win
-      modalType.textContent = 'Yay!'; modalType.style.background = 'linear-gradient(135deg, var(--primary), #ff9fc6)';
+    }else{
+      modalType.textContent='Yay!';
+      modalType.style.background='linear-gradient(135deg, var(--pink), var(--pink-2))';
       modalBody.textContent = customText || 'Kalian kompak banget!';
     }
     modal.classList.add('show');
   }
   function closePrompt(){ modal.classList.remove('show'); }
 
-  // ====== Events ======
+  function handleMatch(){
+    matches++;
+    vibrate([0,10,20,10]);
+    chord([659,784,987],0.18); // ding sfx
+    firstCard.parentElement.classList.add('matched');
+    secondCard.parentElement.classList.add('matched');
+    firstCard.disabled=true; secondCard.disabled=true;
+    firstCard=null; secondCard=null;
+
+    addPointCurrent(); // tambah skor untuk pemain yang sedang jalan
+    openPrompt(Math.random()<.7?'deep':'challenge');
+
+    const need = deck.length/2;
+    if(matches===need){
+      setTimeout(()=>{
+        if(tick){ clearInterval(tick); tick=null; }
+        const key=levelEl.value+'|'+setEl.value+'|'+(twoPlayers?'2p':'1p');
+        const best=getBest(key);
+        const score={time:timer, moves};
+        if(!best || score.time<best.time || (score.time===best.time && score.moves<best.moves)){ saveBest(key,score); }
+        showBest();
+        burstConfetti();
+        let winMsg = `🎉 Waktu: ${timer}s • Langkah: ${moves}.`;
+        if(twoPlayers){
+          if(p1Score>p2Score) winMsg += ` Pemenang: P1 (${p1Score} pasangan) 🏆`;
+          else if(p2Score>p1Score) winMsg += ` Pemenang: P2 (${p2Score} pasangan) 🏆`;
+          else winMsg += ` Seri! Skor ${p1Score} - ${p2Score} 🤝`;
+        }
+        openPrompt('win', winMsg + ' Rematch atau ganti level?');
+      }, 220);
+    }
+    // Catatan: pada match, pemain yang sama lanjut (tidak switch turn)
+  }
+
+  // ===== Events =====
   startBtn.addEventListener('click', startGame);
   levelEl.addEventListener('change', startGame);
   setEl.addEventListener('change', startGame);
   uploadsEl.addEventListener('change', startGame);
+  modeEl.addEventListener('change', ()=>{ reset2P(); showBest(); startGame(); });
+  themeEl.addEventListener('change', ()=> setTheme(themeEl.value));
+  setTheme(themeEl.value);
 
-  closeModalBtn.addEventListener('click', () => { closePrompt(); });
-  skipPromptBtn.addEventListener('click', () => {
-    // Switch prompt type randomly when skipping
-    const flip = Math.random() < .5 ? 'deep' : 'challenge';
-    openPrompt(flip);
+  document.getElementById('closeModal').addEventListener('click', closePrompt);
+  document.getElementById('skipPrompt').addEventListener('click', ()=> openPrompt(Math.random()<.5?'deep':'challenge'));
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) closePrompt(); });
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePrompt(); });
+
+  // Sound toggle
+  soundBtn.addEventListener('click', ()=>{
+    soundOn = !soundOn;
+    soundBtn.textContent = soundOn ? '🔊' : '🔈';
+    if(soundOn){ beep(700,0.06,'square',0.04); }
   });
-  modal.addEventListener('click', (e) => { if(e.target === modal) closePrompt(); });
-
-  // Keyboard escape
-  window.addEventListener('keydown', (e) => { if(e.key==='Escape') closePrompt(); });
 
   // Start first time
   startGame();

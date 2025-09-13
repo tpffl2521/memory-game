@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Memory Game – Couple Edition</title>
+<style>
+  :root{
+    --bg:#fff9fb;
+    --card:#ffffff;
+    --primary:#ff6fa9;
+    --secondary:#ffd166;
+    --accent:#62d2a2;
+    --text:#333;
+    --muted:#777;
+    --shadow: 0 8px 24px rgba(255,111,169,0.25);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 800px at 85% -10%, #ffe7f1 0%, #fff 50%), var(--bg);
+    color:var(--text);
+  }
+  header{
+    padding:16px 14px 8px; position:sticky; top:0; z-index:5;
+    background:linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0.6) 60%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .title{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+  }
+  .badge{
+    background: linear-gradient(135deg, var(--primary), #ff9fc6);
+    color:white; padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; letter-spacing:.4px;
+    box-shadow: var(--shadow);
+  }
+  .controls{
+    display:grid; grid-template-columns: 1fr; gap:10px; margin-top:10px;
+  }
+  @media (min-width:720px){
+    .controls{grid-template-columns: auto auto auto 1fr auto}
+  }
+  .card-panel{
+    margin: 12px auto 20px; max-width: 1100px; background: #ffffffaa; border-radius: var(--radius);
+    padding: 10px; box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  }
+  .group{
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    background:#fff; padding:8px 10px; border-radius:12px; border:1px solid #f3e4ea;
+  }
+  label{font-size:12px; color:var(--muted)}
+  select, button, input[type="file"]{
+    appearance:none; border:1px solid #ffd6e6; border-radius:10px; padding:10px 12px; background:#fff;
+    font-size:14px; color:var(--text);
+  }
+  button{
+    background: linear-gradient(135deg, var(--primary), #ff9fc6); color:#fff; border:none; cursor:pointer;
+    font-weight:700; box-shadow: var(--shadow);
+    transition: transform .06s ease;
+  }
+  button:active{ transform: translateY(1px) scale(.99); }
+  .stat{
+    display:flex; gap:14px; align-items:center; font-size:14px; flex-wrap:wrap;
+  }
+  .chip{
+    background:#fff; border:1px dashed #ffd6e6; padding:6px 10px; border-radius:999px; font-weight:600;
+  }
+
+  /* Board */
+  .board-wrap{max-width:1100px; margin:0 auto 60px; padding:0 14px;}
+  .board{
+    display:grid; gap:10px; justify-content:center;
+  }
+  /* grid responsive by data-cols */
+  .board[data-cols="4"]{ grid-template-columns: repeat(4, minmax(72px, 1fr));}
+  .board[data-cols="5"]{ grid-template-columns: repeat(5, minmax(64px, 1fr));}
+  .board[data-cols="6"]{ grid-template-columns: repeat(6, minmax(56px, 1fr));}
+  @media (min-width:520px){
+    .board[data-cols="4"]{ grid-template-columns: repeat(4, 140px);}
+    .board[data-cols="5"]{ grid-template-columns: repeat(5, 120px);}
+    .board[data-cols="6"]{ grid-template-columns: repeat(6, 108px);}
+  }
+
+  .tile{
+    perspective: 900px; position:relative; aspect-ratio: 3/4;
+  }
+  .card{
+    width:100%; height:100%; border-radius:16px; position:absolute; inset:0;
+    transform-style: preserve-3d; transition: transform .5s cubic-bezier(.2,.7,.2,1);
+    cursor:pointer;
+  }
+  .card.flip{ transform: rotateY(180deg) }
+  .face{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; backface-visibility:hidden;
+    border-radius:16px; user-select:none;
+  }
+  .front{
+    background:#fff; border:2px solid #ffd6e6;
+    background-image: radial-gradient(12px 12px at 20% 20%, rgba(255,245,248,.9), transparent 60%),
+                      radial-gradient(18px 18px at 80% 60%, #fff1f7, transparent 60%);
+  }
+  .back{
+    transform: rotateY(180deg);
+    background:linear-gradient(145deg, #fff, #ffeaf2);
+    border:2px solid #ffc0da;
+  }
+  .emoji{
+    font-size: clamp(28px, 5.6vw, 42px);
+  }
+  .word{
+    font-size: clamp(16px, 3.8vw, 20px); font-weight:800; color:#ff3d8a; letter-spacing:.4px; text-align:center; padding:8px;
+  }
+  .thumb{
+    width:100%; height:100%; object-fit:cover; border-radius:14px;
+  }
+  .matched .card{ animation: pop .6s ease }
+  @keyframes pop{ 50%{ transform: rotateY(180deg) scale(1.04) } }
+
+  /* Modal */
+  .modal{
+    position: fixed; inset:0; display:none; place-items:center; padding:16px; z-index:50;
+    background: rgba(0,0,0,.25);
+  }
+  .modal.show{ display:grid; }
+  .modal-card{
+    width:min(560px, 94vw); background:#fff; border-radius:20px; padding:18px 16px 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.15); border:2px solid #ffd6e6;
+  }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px;
+  }
+  .modal-head h3{ margin:0; font-size:18px }
+  .tag{
+    padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800; color:#fff;
+    background: linear-gradient(135deg, var(--accent), #7be3be);
+  }
+  .modal-body{ font-size:16px; line-height:1.5; padding:8px 2px 2px; }
+  .modal-actions{ margin-top:14px; display:flex; gap:8px; justify-content:flex-end }
+  .btn-secondary{
+    background:linear-gradient(135deg, #ffd166, #ffe08a); color:#8a5a00;
+  }
+
+  /* Footer tip */
+  .tips{
+    max-width:1100px; margin:0 auto 40px; padding:0 14px; color:#7a5b68; font-size:13px;
+  }
+
+  /* focus */
+  .card:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible{
+    outline:3px solid #ffb3d1; outline-offset:2px; border-radius:12px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <h1 style="margin:0;font-size:22px">💖 Memory Game – Couple Edition</h1>
+      <span class="badge">Colorful • Mobile-Friendly</span>
+      <span class="badge" style="background:linear-gradient(135deg,#62d2a2,#7be3be)">Vibrate + Pop-ups</span>
+    </div>
+
+    <div class="card-panel">
+      <div class="controls">
+        <div class="group">
+          <label for="level">Level</label>
+          <select id="level" aria-label="Pilih level">
+            <option value="4x3">Mudah 4×3 (6 pasang)</option>
+            <option value="4x4" selected>Standard 4×4 (8 pasang)</option>
+            <option value="5x4">Menengah 5×4 (10 pasang)</option>
+            <option value="6x4">Sulit 6×4 (12 pasang)</option>
+          </select>
+        </div>
+
+        <div class="group" style="min-width:220px">
+          <label for="uploads">Upload Foto (otomatis jadi pasangan)</label>
+          <input id="uploads" type="file" accept="image/*" multiple />
+        </div>
+
+        <div class="group">
+          <label for="set">Isi Default</label>
+          <select id="set" aria-label="Pilih set">
+            <option value="mix" selected>Campur Ikon + Kata</option>
+            <option value="icons">Ikon Romantis</option>
+            <option value="words">Kata Romantis</option>
+            <option value="none">Hanya Foto Upload</option>
+          </select>
+        </div>
+
+        <div class="group stat" id="stats">
+          <span class="chip" id="timer">⏱ 00:00</span>
+          <span class="chip" id="moves">👣 0</span>
+          <span class="chip" id="best">🏆 Best: —</span>
+        </div>
+
+        <div class="group" style="justify-content:flex-end">
+          <button id="start">Mulai / Reset</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="board-wrap">
+    <div id="board" class="board" data-cols="4" aria-live="polite"></div>
+  </main>
+
+  <section class="tips">
+    Tip: Klik/ketuk kartu untuk membalik. Setiap kamu berhasil menemukan pasangan, akan muncul pop-up berisi
+    pertanyaan <b>Deep Talk</b> atau <b>Challenge</b> lucu buat pasangan. Kamu bisa unggah foto pribadi agar
+    makin personal. Semua berjalan baik di HP 🤳.
+  </section>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modalTitle">♥️ Momen Match!</h3>
+        <span id="modalType" class="tag">Deep Talk</span>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="skipPrompt" type="button">Ganti Pertanyaan</button>
+        <button id="closeModal" type="button">Lanjut Main</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ====== Data ======
+  const ICONS = ['💘','💝','💞','💕','💓','💗','💖','❤️','🫶','😘','😍','😚','👩‍❤️‍👨','💍','🌹','🌸','🍫','☕️','🍓','🎵','📸','✈️','🏝️','🌙','⭐️','🎁','🍰','🍦','🥰','🤍','💌','🎧','🎬','🍿','💃','🕺'];
+  const WORDS = ['Cintaku','Sayang','Peluk','Rindu','My Person','Soulmate','Kamu&Aku','Forever','IniTakdir?','PegangTangan','DateNight','PelipurLara','Let’sTalk','Honesty','Trust','Grateful','Support','QualityTime','Respect','WeTime','Komitmen','Impian','Rumah','Humor','Sabar','Maaf','PelukDulu','CupOfTea'];
+
+  const DEEP_TALK = [
+    "Hal kecil apa dari aku yang paling kamu syukuri akhir-akhir ini?",
+    "Kapan kamu merasa paling didengar olehku?",
+    "Satu kebiasaan pasangan ideal yang ingin kita bangun bareng?",
+    "Hal yang dulu kamu takutkan tentang hubungan, dan bagaimana sekarang?",
+    "Apa arti ‘rumah’ buat kamu?",
+    "Jika 5 tahun lagi, kita ingin dikenal sebagai pasangan yang seperti apa?",
+    "Bagian mana dari dirimu yang ingin lebih kupahami?",
+    "Kapan terakhir kali kamu merasa benar-benar didukung?",
+    "Batasan (boundary) apa yang penting untuk kita jaga?",
+    "Momen paling sederhana tapi bermakna yang ingin kamu ulang?"
+  ];
+  const CHALLENGES = [
+    "Peluk pasanganmu 10 detik penuh. 🤗",
+    "Katakan 3 hal yang kamu sukai dari pasangan. 💬",
+    "Tukar kontak wallpaper HP selama 1 hari. 📱",
+    "Rekam voice note 10 detik berisi apresiasi. 🎙️",
+    "Selfie bareng sekarang juga! 📸",
+    "Pegang tangan pasangan sampai 1 ronde selesai. 🤝",
+    "Pilih lagu romantis dan putar pelan-pelan. 🎵",
+    "Kirim DM/WA satu kalimat manis barusan. 💌",
+    "Buat janji kencan sederhana minggu ini. 📅",
+    "Tertawa bareng 30 detik walau garing. 😂"
+  ];
+
+  // ====== State ======
+  const boardEl = document.getElementById('board');
+  const timerEl = document.getElementById('timer');
+  const movesEl = document.getElementById('moves');
+  const bestEl  = document.getElementById('best');
+  const levelEl = document.getElementById('level');
+  const setEl   = document.getElementById('set');
+  const uploadsEl = document.getElementById('uploads');
+  const startBtn = document.getElementById('start');
+
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalType = document.getElementById('modalType');
+  const modalBody = document.getElementById('modalBody');
+  const closeModalBtn = document.getElementById('closeModal');
+  const skipPromptBtn = document.getElementById('skipPrompt');
+
+  let firstCard = null, secondCard = null, lockBoard = false;
+  let moves = 0, matches = 0, totalPairs = 8, timer = 0, tick = null, started = false;
+  let deck = []; // {id, type:'emoji'|'word'|'img', value, matchId}
+
+  // ====== Utils ======
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const pad = n => String(n).padStart(2, '0');
+  const vibrate = (p) => { if (navigator.vibrate) navigator.vibrate(p); };
+
+  function saveBest(levelKey, val){
+    localStorage.setItem('coupleMemory.best.'+levelKey, JSON.stringify(val));
+  }
+  function getBest(levelKey){
+    try{
+      const v = JSON.parse(localStorage.getItem('coupleMemory.best.'+levelKey));
+      return v||null;
+    }catch{ return null }
+  }
+  function showBest(){
+    const key = levelEl.value + '|' + setEl.value;
+    const b = getBest(key);
+    if(!b){ bestEl.textContent = '🏆 Best: —'; return; }
+    bestEl.textContent = `🏆 Best: ${b.time}s • ${b.moves} moves`;
+  }
+
+  function updateTimer(){
+    timer++;
+    const m = Math.floor(timer/60), s = timer%60;
+    timerEl.textContent = `⏱ ${pad(m)}:${pad(s)}`;
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  // Builds deck based on uploads + set + level
+  async function buildDeck(){
+    const [cols, rows] = levelEl.value.split('x').map(Number);
+    totalPairs = (cols*rows)/2;
+    boardEl.dataset.cols = String(cols);
+
+    // Read uploads into DataURL
+    let uploadPairs = [];
+    if(uploadsEl.files && uploadsEl.files.length){
+      const files = Array.from(uploadsEl.files).slice(0, totalPairs); // limit pairs
+      uploadPairs = await Promise.all(files.map(file => new Promise((res)=>{
+        const fr = new FileReader();
+        fr.onload = () => res({ type:'img', value: fr.result });
+        fr.readAsDataURL(file);
+      })));
+    }
+
+    // Build default pool
+    let pool = [];
+    if(setEl.value !== 'none'){
+      if(setEl.value === 'icons' || setEl.value === 'mix'){
+        pool.push(...shuffle([...ICONS]).slice(0, totalPairs));
+      }
+      if(setEl.value === 'words' || setEl.value === 'mix'){
+        const needed = totalPairs - (pool.length ? Math.floor(pool.length/2) : 0);
+        // mix ensures both types; adjust selection
+        pool.push(...shuffle([...WORDS]).slice(0, Math.max(0, needed)));
+      }
+    }
+
+    // Construct pairs priority: uploads first, then defaults
+    const pairs = [];
+    // add uploads
+    uploadPairs.forEach(p => pairs.push(p));
+    // fill remaining
+    let i=0, j=0;
+    while(pairs.length < totalPairs){
+      if(setEl.value==='icons'){
+        pairs.push({type:'emoji', value: ICONS[i % ICONS.length]}); i++;
+      }else if(setEl.value==='words'){
+        pairs.push({type:'word', value: WORDS[j % WORDS.length]}); j++;
+      }else{ // mix
+        if(pairs.length % 2 === 0){
+          pairs.push({type:'emoji', value: ICONS[i % ICONS.length]}); i++;
+        }else{
+          pairs.push({type:'word', value: WORDS[j % WORDS.length]}); j++;
+        }
+      }
+      // if 'none' and no uploads, fallback to icons
+      if(setEl.value==='none' && uploadPairs.length===0){
+        pairs[pairs.length-1] = {type:'emoji', value: ICONS[i++ % ICONS.length]};
+      }
+    }
+
+    // Expand pairs to two cards each
+    let idCounter = 0;
+    deck = shuffle(pairs.flatMap((p, idx) => {
+      const matchId = 'm'+idx;
+      const a = { id: 'c'+(idCounter++), matchId, ...p };
+      const b = { id: 'c'+(idCounter++), matchId, ...p };
+      return [a,b];
+    }));
+  }
+
+  function renderBoard(){
+    boardEl.innerHTML = '';
+    deck.forEach(cardData => {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'card';
+      card.setAttribute('data-id', cardData.id);
+      card.setAttribute('data-match', cardData.matchId);
+      card.setAttribute('aria-label', 'Kartu belum terbuka');
+      card.addEventListener('click', onFlip);
+
+      const front = document.createElement('div');
+      front.className = 'face front';
+      front.innerHTML = `<span class="emoji">❓</span>`;
+
+      const back = document.createElement('div');
+      back.className = 'face back';
+      if(cardData.type==='emoji'){
+        back.innerHTML = `<span class="emoji">${cardData.value}</span>`;
+      }else if(cardData.type==='word'){
+        back.innerHTML = `<div class="word">${cardData.value}</div>`;
+      }else{ // img
+        const img = document.createElement('img');
+        img.src = cardData.value;
+        img.alt = "Foto pasangan";
+        img.className = 'thumb';
+        back.appendChild(img);
+      }
+
+      card.appendChild(front); card.appendChild(back);
+      tile.appendChild(card);
+      boardEl.appendChild(tile);
+    });
+  }
+
+  function resetStateUI(){
+    firstCard = null; secondCard = null; lockBoard = false;
+    moves = 0; matches = 0; timer = 0; started = false;
+    timerEl.textContent = `⏱ 00:00`; movesEl.textContent = `👣 0`;
+    if(tick){ clearInterval(tick); tick = null; }
+  }
+
+  async function startGame(){
+    vibrate(20);
+    resetStateUI();
+    await buildDeck();
+    renderBoard();
+    showBest();
+  }
+
+  function startTimerOnce(){
+    if(started) return;
+    started = true;
+    tick = setInterval(updateTimer, 1000);
+  }
+
+  function onFlip(e){
+    const btn = e.currentTarget;
+    if(lockBoard) return;
+    if(btn.classList.contains('flip')) return;
+
+    startTimerOnce();
+    btn.classList.add('flip');
+    vibrate(8);
+
+    if(!firstCard){
+      firstCard = btn; return;
+    }
+    secondCard = btn;
+    moves++; movesEl.textContent = `👣 ${moves}`;
+
+    const isMatch = firstCard.dataset.match === secondCard.dataset.match;
+    if(isMatch){
+      handleMatch();
+    }else{
+      lockBoard = true;
+      setTimeout(() => {
+        firstCard.classList.remove('flip');
+        secondCard.classList.remove('flip');
+        firstCard = null; secondCard = null; lockBoard = false;
+      }, 700);
+    }
+  }
+
+  async function handleMatch(){
+    matches++;
+    vibrate([0, 10, 20, 10]);
+    // freeze matched
+    firstCard.parentElement.classList.add('matched');
+    secondCard.parentElement.classList.add('matched');
+    firstCard.disabled = true; secondCard.disabled = true;
+    firstCard = null; secondCard = null;
+
+    // Pop prompt (70% deep talk, 30% challenge)
+    const isDeep = Math.random() < .7;
+    openPrompt(isDeep ? 'deep' : 'challenge');
+
+    // Win?
+    const needed = deck.length/2;
+    if(matches === needed){
+      setTimeout(() => {
+        if(tick){ clearInterval(tick); tick = null; }
+        const key = levelEl.value + '|' + setEl.value;
+        const best = getBest(key);
+        const score = { time: timer, moves };
+        if(!best || score.time < best.time || (score.time===best.time && score.moves<best.moves)){
+          saveBest(key, score);
+        }
+        showBest();
+        // final prompt
+        openPrompt('win', `Selesai! 🎉 Waktu: ${timer}s • Langkah: ${moves}. Mau rematch atau naik level?`);
+      }, 200);
+    }
+  }
+
+  function randomPrompt(kind){
+    if(kind==='deep'){
+      return DEEP_TALK[Math.floor(Math.random()*DEEP_TALK.length)];
+    }else if(kind==='challenge'){
+      return CHALLENGES[Math.floor(Math.random()*CHALLENGES.length)];
+    }
+    return '';
+  }
+
+  function openPrompt(kind='deep', customText=null){
+    modalTitle.textContent = kind==='win' ? '🏁 Game Selesai' : '♥️ Momen Match!';
+    if(kind==='deep'){
+      modalType.textContent = 'Deep Talk'; modalType.style.background = 'linear-gradient(135deg, var(--accent), #7be3be)';
+      modalBody.textContent = customText || randomPrompt('deep');
+    }else if(kind==='challenge'){
+      modalType.textContent = 'Challenge'; modalType.style.background = 'linear-gradient(135deg, var(--secondary), #ffe08a)';
+      modalBody.textContent = customText || randomPrompt('challenge');
+    }else{ // win
+      modalType.textContent = 'Yay!'; modalType.style.background = 'linear-gradient(135deg, var(--primary), #ff9fc6)';
+      modalBody.textContent = customText || 'Kalian kompak banget!';
+    }
+    modal.classList.add('show');
+  }
+  function closePrompt(){ modal.classList.remove('show'); }
+
+  // ====== Events ======
+  startBtn.addEventListener('click', startGame);
+  levelEl.addEventListener('change', startGame);
+  setEl.addEventListener('change', startGame);
+  uploadsEl.addEventListener('change', startGame);
+
+  closeModalBtn.addEventListener('click', () => { closePrompt(); });
+  skipPromptBtn.addEventListener('click', () => {
+    // Switch prompt type randomly when skipping
+    const flip = Math.random() < .5 ? 'deep' : 'challenge';
+    openPrompt(flip);
+  });
+  modal.addEventListener('click', (e) => { if(e.target === modal) closePrompt(); });
+
+  // Keyboard escape
+  window.addEventListener('keydown', (e) => { if(e.key==='Escape') closePrompt(); });
+
+  // Start first time
+  startGame();
+})();
+</script>
+</body>
+</html>

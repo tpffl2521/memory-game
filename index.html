@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Memory Game – Couple Edition (Cute + 2P + Sound)</title>
+<title>Memory Game – Couple Edition (Fixed + Cute + 2P + Sound)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -53,6 +53,8 @@
       radial-gradient(900px 600px at 85% 0%, #ffffff66 0%, transparent 60%),
       linear-gradient(180deg, var(--bg-1), var(--bg-2));
     overflow-x:hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* Floating hearts */
@@ -102,7 +104,8 @@
   }
   label{font-size:12px; color:var(--muted)}
   select, button, input[type="file"]{
-    appearance:none; border:2px solid var(--pink-3); border-radius:12px; padding:10px 12px; background:#fff;
+    appearance:none; -webkit-appearance:none;
+    border:2px solid var(--pink-3); border-radius:12px; padding:10px 12px; background:#fff;
     font-size:14px; color:var(--text);
   }
   button{
@@ -120,7 +123,7 @@
 
   /* Board */
   .board-wrap{max-width:1100px; margin:0 auto 60px; padding:0 14px; position:relative; z-index:1;}
-  .board{ display:grid; gap:12px; justify-content:center; }
+  .board{ display:grid; gap:12px; justify-content:center; overflow:visible; }
   .board[data-cols="4"]{ grid-template-columns: repeat(4, minmax(74px, 1fr));}
   .board[data-cols="5"]{ grid-template-columns: repeat(5, minmax(64px, 1fr));}
   .board[data-cols="6"]{ grid-template-columns: repeat(6, minmax(56px, 1fr));}
@@ -130,16 +133,31 @@
     .board[data-cols="6"]{ grid-template-columns: repeat(6, 110px);}
   }
 
-  .tile{ perspective: 1000px; position:relative; aspect-ratio: 3/4; }
+  /* ===== FLIP FIX: Safari/WebView compatibility ===== */
+  .tile{
+    position:relative; aspect-ratio: 3/4;
+    perspective: 1000px;
+    -webkit-perspective: 1000px; /* iOS/Safari */
+    overflow:visible;            /* jangan memotong 3D */
+  }
   .card{
     width:100%; height:100%; border-radius:18px; position:absolute; inset:0;
-    transform-style: preserve-3d; transition: transform .6s cubic-bezier(.2,.8,.2,1);
+    transform-style: preserve-3d; -webkit-transform-style: preserve-3d; /* iOS */
+    will-change: transform;
     cursor:pointer;
+    background: transparent; border:none; -webkit-appearance:none; /* iOS button quirk */
+    transform: translateZ(0); -webkit-transform: translateZ(0); /* paksa GPU */
   }
-  .card.flip{ transform: rotateY(180deg) }
+  .card.flip{
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg); /* iOS/Safari */
+  }
   .face{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; backface-visibility:hidden;
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden; /* penting */
     border-radius:18px; user-select:none;
+    transform: translateZ(0); -webkit-transform: translateZ(0);
+    overflow:hidden; /* amankan gambar full */
   }
   .front{
     background:
@@ -147,7 +165,6 @@
       radial-gradient(24px 24px at 80% 65%, #ffe9f3 0%, transparent 70%),
       linear-gradient(145deg, #ffffff, #fff7fb);
     border:2.5px solid var(--pink-3);
-    position:relative;
   }
   .front .qmark{
     font-size: clamp(22px, 5.4vw, 34px);
@@ -158,6 +175,7 @@
   .front .bow{ position:absolute; top:8px; right:10px; font-size:18px; opacity:.7; }
   .back{
     transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
     background:
       radial-gradient(10px 10px at 16% 24%, #ffddec 0%, transparent 60%),
       radial-gradient(12px 12px at 80% 70%, #ffe9f4 0%, transparent 60%),
@@ -167,7 +185,8 @@
   }
   .emoji{ font-size: clamp(30px, 6vw, 44px) }
   .word{ font-size: clamp(16px, 4vw, 20px); font-weight:900; color:var(--pink); letter-spacing:.4px; text-align:center; padding:8px 10px; text-shadow: 0 2px 0 var(--pink-3); }
-  .thumb{ width:100%; height:100%; object-fit:cover; border-radius:16px; }
+  .thumb{ width:100%; height:100%; object-fit:cover; border-radius:16px; display:block; }
+
   .matched .card{ animation: pop .6s ease }
   @keyframes pop{ 40%{ transform: rotateY(180deg) scale(1.05) } }
 
@@ -198,6 +217,11 @@
   .confetti{ position:fixed; inset:0; pointer-events:none; z-index:60; }
   .piece{ position:absolute; width:10px; height:14px; opacity:.95; animation: fall linear forwards; }
   @keyframes fall{ to{ transform: translateY(110vh) rotate(720deg); opacity:1 } }
+
+  /* Focus ring */
+  .card:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible{
+    outline:3px solid var(--pink-3); outline-offset:2px; border-radius:12px;
+  }
 </style>
 </head>
 <body data-theme="pink">
